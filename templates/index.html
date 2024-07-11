@@ -7,7 +7,7 @@
                 <div class="row gx-4 gx-lg-5 justify-content-center">
                     <div class="col-md-10 col-lg-8 col-xl-7">
                         <div class="site-heading">
-                            {% if user.is_authenticated %}
+                            {% if user and user.is_authenticated %}
                             <h1>{{user.name}}</h1>
                             {% else %}
                             <h1>Discover New Blogs</h1>

@@ -4,6 +4,7 @@ from sqlalchemy import Integer, String, Text, ForeignKey
 
 # flask login
 from flask_login import UserMixin, login_user
+import os
 
 
 class Base(DeclarativeBase):
@@ -14,7 +15,7 @@ db = SQLAlchemy(model_class=Base)
 
 
 def database_config(app):
-    app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///posts.db"
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_CONNECT")
     db.init_app(app)
     return db
 

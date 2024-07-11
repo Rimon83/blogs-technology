@@ -62,7 +62,11 @@
                     <!-- Show all comments -->
                     {% for comment in post.comments: %}
                     <li>
-
+                        <div class="commenterImage">
+                            <img
+                                    src="{{ comment.author_comment.email | gravatar }}"
+                            />
+                        </div>
                         <div class="commentText">
                             <p>{{comment.text|safe}}</p>
                             <span class="sub-text">{{comment.author_comment.name}}</span>

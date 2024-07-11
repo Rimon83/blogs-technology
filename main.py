@@ -17,7 +17,7 @@ from flask_login import login_user, LoginManager, login_required, current_user, 
 from functools import wraps
 from flask import abort
 from flask_gravatar import Gravatar
-
+import os
 
 
 #Create admin-only decorator
@@ -36,10 +36,10 @@ def admin_only(f):
 # USE YOUR OWN npoint LINK!
 # posts = requests.get("https://api.npoint.io/c790b4d5cab58020d391").json()
 
-
+# '8BYkEfBA6O6donzWlSihBXox7C0sKR6b'
 app = Flask(__name__)
 ckeditor = CKEditor(app)
-app.config['SECRET_KEY'] = '8BYkEfBA6O6donzWlSihBXox7C0sKR6b'
+app.config['SECRET_KEY'] = os.environ.get('FLASK_KEY')
 bootstrap = Bootstrap5(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -59,8 +59,8 @@ with app.app_context():
     db.create_all()
 
 # set email sending
-my_email = "rimon.alqoshi@gmail.com"
-password = "ijvojkrnlnrtyzpa"
+my_email = os.environ.get('EMAIL')
+password = os.environ.get('PASSWORD')
 
 
 # Create a user_loader callback
@@ -83,11 +83,18 @@ def get_all_posts():
 
 @app.route("/about")
 def about():
-    return render_template("about.html")
+    user = None
+    posts = read_all_posts()
+    if current_user.is_authenticated:
+        user = current_user
+    return render_template("about.html", user=user)
 
 
 @app.route("/contact", methods=['POST', 'GET'])
 def contact():
+    user = None
+    if current_user.is_authenticated:
+        user = current_user
     if request.method == "POST":
         name = request.form["name"]
         email = request.form["email"]
@@ -107,7 +114,7 @@ def contact():
                                 msg=f"Subject: get Details\n\n Name: {name} \nEmail: {email}\nPhone: {phone}\nMessage: {message}")
         return f"<h1>successfully sent your message</h1>"
     else:
-        return render_template("contact.html")
+        return render_template("contact.html", user=user)
 
 
 @app.route("/post/<int:index>", methods=["GET", "POST"])
@@ -188,6 +195,9 @@ def delete_post():
 #register route
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    user = None
+    if current_user.is_authenticated:
+        user = current_user
     form = RegisterForm()
     if form.validate_on_submit():
         register_password = request.form["password"]
@@ -209,11 +219,14 @@ def register():
         insert_new_user(register_data)
         return redirect(url_for('get_all_posts'))
 
-    return render_template("register.html", form=form)
+    return render_template("register.html", form=form, user=user)
 
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    user = None
+    if current_user.is_authenticated:
+        user = current_user
     form = LoginForm()
     if request.method == "POST" and form.validate_on_submit():
         email = request.form.get('email')
@@ -230,7 +243,7 @@ def login():
             login_user(user)
             return redirect(url_for('get_all_posts'))
 
-    return render_template("login.html", form=form)
+    return render_template("login.html", form=form, user=user)
 
 
 # logout
