@@ -9,15 +9,17 @@ from flask_bootstrap import Bootstrap5
 # textarea
 from flask_ckeditor import CKEditor
 # custom form model
-from forms import PostForm, RegisterForm, LoginForm, CommentForm
+from forms import PostForm, RegisterForm, LoginForm, CommentForm, EditCommentForm
 from models import (database_config, read_all_posts, read_post_by_id, insert_new_post, edit_one_post,
-                    insert_new_user, read_user_by_email, User, Comment)
+                    insert_new_user, read_user_by_email, User, Comment, read_comment_by_id, edit_one_comment,
+                    insert_comment)
 #login flask
-from flask_login import login_user, LoginManager, login_required, current_user, logout_user
+from flask_login import login_user, LoginManager, current_user, logout_user
 from functools import wraps
 from flask import abort
 from flask_gravatar import Gravatar
 import os
+from icons import edit_icon, delete_icon
 
 
 #Create admin-only decorator
@@ -28,6 +30,17 @@ def admin_only(f):
         if current_user.id != 1:
             return abort(403)
         #Otherwise continue with the route function
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
+# update login_required
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            return redirect(url_for('login'))
         return f(*args, **kwargs)
 
     return decorated_function
@@ -117,8 +130,8 @@ def contact():
         return render_template("contact.html", user=user)
 
 
-@app.route("/post/<int:index>", methods=["GET", "POST"])
-def show_post(index):
+@app.route("/post", methods=["GET", "POST"])
+def show_post():
     # API
     # requested_post = None
     # for blog_post in posts:
@@ -126,31 +139,39 @@ def show_post(index):
     #         requested_post = blog_post
 
     # database
-    post = read_post_by_id(index)
+    post = read_post_by_id(request.args.get('post_id'))
     comment_form = CommentForm()
+    edit_comment_form = EditCommentForm()
     if current_user.is_authenticated:
         user = current_user
     else:
         flash("You need to login or register to comment.")
         return redirect(url_for("login"))
 
-    if comment_form.validate_on_submit():
-        text = request.form["comment"]
-        author_id = current_user.id
-        post_id = post.id
-        comment = Comment(text=text, author_id=author_id, post_id=post_id)
-        db.session.add(comment)
-        db.session.commit()
+    if request.method == "POST":
+        if comment_form.validate_on_submit():
+            data = request.form.to_dict()
+            data["author_id"] = current_user.id
+            data["post_id"] = post.id
+            insert_comment(data)
+
+            return redirect(url_for("show_post", post_id=post.id))
     return render_template("post.html",
                            post=post,
                            form=comment_form,
-                           user=user)
+                           edit_comment_form=edit_comment_form,
+                           user=user,
+                           edit_icon=edit_icon,
+                           delete_icon=delete_icon)
 
 
 # create new post
 @app.route("/new-post", methods=["GET", "POST"])
 @admin_only
 def new_post():
+    user = None
+    if current_user.is_authenticated:
+        user = current_user
     date = datetime.datetime.now()
     formatted_date = date.strftime("%B %d, %Y")
 
@@ -164,21 +185,24 @@ def new_post():
         # Insert new post with the updated dictionary
         insert_new_post(new_data_form)
         return redirect(url_for("get_all_posts"))
-    return render_template("make_post.html", form=form)
+    return render_template("make_post.html", form=form, user=user)
 
 
 #edit route
 @app.route("/edit/<int:post_id>", methods=["GET", "POST"])
 @admin_only
 def edit_post(post_id):
+    user = None
+    if current_user.is_authenticated:
+        user = current_user
     # Edit the post
     if post_id:
         post = read_post_by_id(post_id)
         form = PostForm(obj=post)
         if form.validate_on_submit():
             edit_one_post(post, form)
-            return redirect(url_for("show_post", index=post.id))
-        return render_template("make_post.html", form=form, post_id=post_id)
+            return redirect(url_for("show_post", post_id=post.id))
+        return render_template("make_post.html", form=form, post_id=post_id, user=user)
 
 
 # delete post route
@@ -186,9 +210,16 @@ def edit_post(post_id):
 @admin_only
 def delete_post():
     post_id = request.args.get("post_id")
-    movie_to_delete = read_post_by_id(post_id)
-    db.session.delete(movie_to_delete)
+    post_to_delete = read_post_by_id(post_id)
+
+    # Delete all comments associated with the post
+    comments_to_delete = read_comment_by_id(post_id)
+    for comment in comments_to_delete.all():
+        db.session.delete(comment)
+
+    db.session.delete(post_to_delete)
     db.session.commit()
+
     return redirect(url_for('get_all_posts'))
 
 
@@ -251,6 +282,40 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('login'))
+
+
+@app.route("/edit_comment", methods=["GET", "POST"])
+@login_required
+def edit_comment():
+    if current_user.is_authenticated:
+        user = current_user
+    else:
+        flash("You need to login or register to comment.")
+        return redirect(url_for("login"))
+    post = read_post_by_id(request.args.get('post_id'))
+    comment = read_comment_by_id(request.args.get('comment_id'))
+    comment_form = CommentForm()
+    edit_comment_form = EditCommentForm(obj=comment)
+    if request.method == "POST" and edit_comment_form.validate_on_submit():
+        if comment and comment.author_id == current_user.id:
+            edit_one_comment(comment, request.form)
+            return redirect(url_for("show_post", post_id=post.id))
+    return render_template("post.html",
+                           post=post,
+                           form=comment_form,
+                           edit_comment_form=edit_comment_form,
+                           user=user)
+
+
+@app.route("/delete_comment")
+@login_required
+def delete_comment():
+    post_id = request.args.get("post_id")
+    comment_id = request.args.get("comment_id")
+    comment_to_delete = read_comment_by_id(comment_id)
+    db.session.delete(comment_to_delete)
+    db.session.commit()
+    return redirect(url_for("show_post", post_id=post_id))
 
 
 if __name__ == "__main__":

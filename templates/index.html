@@ -27,7 +27,7 @@
                     {% if all_posts %}
                     {% for post in all_posts %}
                     <div class="post-preview">
-                        <a href="{{ url_for('show_post', index=post.id) }}">
+                        <a href="{{ url_for('show_post', post_id=post.id) }}">
                             <h2 class="post-title">{{ post.title }}</h2>
                             <h3 class="post-subtitle">{{ post.subtitle }}</h3>
                         </a>
@@ -44,7 +44,7 @@
                     <h2>No blogs post yet</h2>
                     {% endif %}
 
-                    {% if is_login and user.id == 1%}
+                    {% if user.is_authenticated and user.id == 1%}
                     <!-- Pager-->
                     <div class="d-flex justify-content-end mb-4">
                         <a class="btn btn-primary" href="{{url_for('new_post')}}">Create New post</a>

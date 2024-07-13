@@ -33,7 +33,6 @@ class BlogPost(db.Model):
     comments = relationship("Comment", back_populates="post_comment")
 
 
-
 # Create a User table for all your registered users
 class User(UserMixin, db.Model):
     __tablename__ = "users"
@@ -46,7 +45,7 @@ class User(UserMixin, db.Model):
 
 
 # comment table that each user has many comments and each post has many comments
-class Comment (db.Model):
+class Comment(db.Model):
     __tablename__ = "comments"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     text: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
@@ -84,7 +83,6 @@ def edit_one_post(old_post, new_post):
     old_post.title = new_post.title.data
     old_post.subtitle = new_post.subtitle.data
     old_post.img_url = new_post.img_url.data
-    old_post.author = new_post.author.data
     old_post.body = new_post.body.data
     db.session.commit()
 
@@ -103,3 +101,22 @@ def read_user_by_email(email):
     result = db.session.execute(db.select(User).where(User.email == email))
     user = result.scalar()
     return user
+
+
+# read specific comment by id
+def read_comment_by_id(comment_id):
+    result = db.session.execute(db.select(Comment).where(Comment.id == comment_id))
+    comment = result.scalars()
+    return comment
+
+
+# edit specific post
+def edit_one_comment(old_comment, new_comment):
+    old_comment.text = new_comment["text"]
+    db.session.commit()
+
+# insert one comment
+def insert_comment(data):
+    comment = Comment(text=data["text"], author_id=data["author_id"], post_id=data["post_id"])
+    db.session.add(comment)
+    db.session.commit()

@@ -28,7 +28,7 @@
                 <p>{{ post.body|safe }}</p>
 
                 <div class="d-flex justify-content-end mb-4 gap-4">
-                    {% if user.is_login and user.id == 1 %}
+                    {% if user.is_authenticated and user.id == 1 %}
 
                     <a
                             class="btn btn-primary float-right"
@@ -55,7 +55,7 @@
 
         <div class="col-lg-8 col-md-10 mx-auto">
             {{ ckeditor.load() }}
-            {{ ckeditor.config(name='comment') }}
+            {{ ckeditor.config(name='text') }}
             {{render_form(form, novalidate=True) }}
             <div class="comment">
                 <ul class="commentList">
@@ -68,18 +68,41 @@
                             />
                         </div>
                         <div class="commentText">
-                            <p>{{comment.text|safe}}</p>
                             <span class="sub-text">{{comment.author_comment.name}}</span>
+                            <p>{{comment.text|safe}}</p>
+                            {% if comment.author_comment.id == user.id and 'comment_id' not in request.args  %}
+                            <div>
+                                <a href="{{url_for('edit_comment',post_id=comment.post_id, comment_id=comment.id)}}"
+                                >
+                                    {{ edit_icon | safe }}
+                                </a>
+                                 <a href="{{url_for('delete_comment',post_id=comment.post_id, comment_id=comment.id)}}"
+                                >
+                                    {{ delete_icon | safe }}
+                                </a>
+                            </div>
+                            {% endif %}
+                            {% if 'comment_id' in request.args and comment.author_comment.id == user.id %}
+                            <div class="modal-body">
+                                {{ ckeditor.load() }}
+                                {{ ckeditor.config(name='text') }}
+                                {{render_form(edit_comment_form, novalidate=True) }}
+                            </div>
+                            {% endif %}
+
                         </div>
+
+
                     </li>
                     {% endfor %}
                 </ul>
-
             </div>
+
         </div>
 
     </div>
 </article>
 
 {% include "footer.html" %}
+
 {% endblock %}

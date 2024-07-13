@@ -10834,3 +10834,9 @@ font-size: 1rem;
   font-family:verdana;
   font-size:13px;
 }
+
+body.modal-open {
+  overflow: hidden;
+  backdrop-filter: blur(5px);
+}
+
