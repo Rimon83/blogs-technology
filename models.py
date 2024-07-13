@@ -106,8 +106,14 @@ def read_user_by_email(email):
 # read specific comment by id
 def read_comment_by_id(comment_id):
     result = db.session.execute(db.select(Comment).where(Comment.id == comment_id))
-    comment = result.scalars()
+    comment = result.scalar()
     return comment
+
+# read specific comment by id
+def read_comment_by_post_id(post_id):
+    result = db.session.execute(db.select(Comment).where(Comment.post_id == post_id))
+    comments = result.scalars().all()
+    return comments
 
 
 # edit specific post

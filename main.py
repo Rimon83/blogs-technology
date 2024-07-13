@@ -12,7 +12,7 @@ from flask_ckeditor import CKEditor
 from forms import PostForm, RegisterForm, LoginForm, CommentForm, EditCommentForm
 from models import (database_config, read_all_posts, read_post_by_id, insert_new_post, edit_one_post,
                     insert_new_user, read_user_by_email, User, Comment, read_comment_by_id, edit_one_comment,
-                    insert_comment)
+                    insert_comment, read_comment_by_post_id)
 # login flask
 from flask_login import login_user, LoginManager, current_user, logout_user
 from functools import wraps
@@ -213,10 +213,9 @@ def delete_post():
     post_to_delete = read_post_by_id(post_id)
 
     # Delete all comments associated with the post
-    comments_to_delete = read_comment_by_id(post_id)
-    for comment in comments_to_delete.all():
+    comments_to_delete = read_comment_by_post_id(post_id)
+    for comment in comments_to_delete:
         db.session.delete(comment)
-
     db.session.delete(post_to_delete)
     db.session.commit()
 
