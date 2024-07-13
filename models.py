@@ -115,6 +115,7 @@ def edit_one_comment(old_comment, new_comment):
     old_comment.text = new_comment["text"]
     db.session.commit()
 
+
 # insert one comment
 def insert_comment(data):
     comment = Comment(text=data["text"], author_id=data["author_id"], post_id=data["post_id"])

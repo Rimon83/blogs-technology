@@ -70,13 +70,13 @@
                         <div class="commentText">
                             <span class="sub-text">{{comment.author_comment.name}}</span>
                             <p>{{comment.text|safe}}</p>
-                            {% if comment.author_comment.id == user.id and 'comment_id' not in request.args  %}
+                            {% if comment.author_comment.id == user.id and 'comment_id' not in request.args %}
                             <div>
                                 <a href="{{url_for('edit_comment',post_id=comment.post_id, comment_id=comment.id)}}"
                                 >
                                     {{ edit_icon | safe }}
                                 </a>
-                                 <a href="{{url_for('delete_comment',post_id=comment.post_id, comment_id=comment.id)}}"
+                                <a href="{{url_for('delete_comment',post_id=comment.post_id, comment_id=comment.id)}}"
                                 >
                                     {{ delete_icon | safe }}
                                 </a>

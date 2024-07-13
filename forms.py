@@ -39,7 +39,7 @@ class CommentForm(FlaskForm):
     text = CKEditorField("Comment", validators=[DataRequired()])
     submit = SubmitField(label="Submit")
 
+
 class EditCommentForm(FlaskForm):
     text = CKEditorField("Edit Comment", validators=[DataRequired()])
     submit = SubmitField(label="Update")
-

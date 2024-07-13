@@ -13,7 +13,7 @@ from forms import PostForm, RegisterForm, LoginForm, CommentForm, EditCommentFor
 from models import (database_config, read_all_posts, read_post_by_id, insert_new_post, edit_one_post,
                     insert_new_user, read_user_by_email, User, Comment, read_comment_by_id, edit_one_comment,
                     insert_comment)
-#login flask
+# login flask
 from flask_login import login_user, LoginManager, current_user, logout_user
 from functools import wraps
 from flask import abort
@@ -22,14 +22,14 @@ import os
 from icons import edit_icon, delete_icon
 
 
-#Create admin-only decorator
+# Create admin-only decorator
 def admin_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        #If id is not 1 then return abort with 403 error
+        # If id is not 1 then return abort with 403 error
         if current_user.id != 1:
             return abort(403)
-        #Otherwise continue with the route function
+        # Otherwise continue with the route function
         return f(*args, **kwargs)
 
     return decorated_function
@@ -188,7 +188,7 @@ def new_post():
     return render_template("make_post.html", form=form, user=user)
 
 
-#edit route
+# edit route
 @app.route("/edit/<int:post_id>", methods=["GET", "POST"])
 @admin_only
 def edit_post(post_id):
@@ -223,7 +223,7 @@ def delete_post():
     return redirect(url_for('get_all_posts'))
 
 
-#register route
+# register route
 @app.route("/register", methods=["GET", "POST"])
 def register():
     user = None
